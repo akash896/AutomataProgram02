@@ -199,8 +199,8 @@ def parse_and(exp, n):
         print("result exp2 = ", res_exp2)
         final_res = res_exp1 and res_exp2
         print("final result of And = ", final_res)
-        #resultant_and_table = combine_and_table(table1, table2, coef_variable_map_table[0].keys(), coef_variable_map_table[1].keys())
-        #print_table(resultant_and_table)
+        resultant_and_table = combine_and_table(table1, table2, coef_variable_map_table[0].keys(), coef_variable_map_table[1].keys())
+        print_table(resultant_and_table)
         #print(resultant_and_table)
 
     if ch == -1:
@@ -278,13 +278,8 @@ def parse_and(exp, n):
 
 
 
-
-
-
-
-
-def combine_and_table(table1, table2, index1, index2):
-    print("args = ", index1, index2)
+def combine_and_table(table1, table2, index1, index2): #AND table combining function
+    #print("args = ", index1, index2)
     global and_states
     and_states = []
     print("inside combine and table")
@@ -299,37 +294,29 @@ def combine_and_table(table1, table2, index1, index2):
     initial_state.append(state[0:state.find("I")])
     state = table2[1][0]
     initial_state.append(state[0:state.find("I")])
-    print("Initial state = ", initial_state)
+    #print("Initial state = ", initial_state)
     exp1_bin_map, exp2_bin_map = (get_bin_comb_map(table1), get_bin_comb_map(table2))
     #print(exp1_bin_map, exp2_bin_map)
     exp1_state_map, exp2_state_map = (get_state_comb_map(table1), get_state_comb_map(table2))
-    print(exp1_state_map, exp2_state_map)
+    #print(exp1_state_map, exp2_state_map)
     and_states.append(initial_state)
-    and_states = get_list_of_string(and_states)
+    and_states_cpy = []
+    and_states_str = get_list_of_string(and_states)
 
     while True:
-
-        completed_flag = 1
-        print("and states = ", and_states)
-        for sta in and_states:
-
-            if sta in processed_states:
-                continue
-            else:
-                processed_states[sta] = 1
-        print("processed states = ", processed_states)
-        for states in processed_states:
-            if processed_states[states] == 1:
-                processed_states[states] = 0
-                completed_flag = 0
-                final_table = update_new_state_in_and(states, exp1_bin_map, exp2_bin_map, exp1_state_map, exp2_state_map, index1,index2, final_table, table1, table2 )
-        if completed_flag == 1:
+        for k in and_states:
+            and_states_cpy.append(k)
+        if len(and_states_cpy) == 0:
             break
+        else:
+            for states in and_states_cpy:
+                and_states.remove(states)
+                final_table = update_new_state_in_and(states, exp1_bin_map, exp2_bin_map, exp1_state_map, exp2_state_map, index1,index2, final_table, table1, table2 )
     return final_table
 
 
 def update_new_state_in_and(states, exp1_bin_map, exp2_bin_map, exp1_state_map, exp2_state_map, index1,index2, final_table, table1, table2):
-    states = str(states).split(",")
+    #print("states = ", states)
     for col in final_table[0]:
         new_row = []
         new_state = []
@@ -353,8 +340,8 @@ def update_new_state_in_and(states, exp1_bin_map, exp2_bin_map, exp1_state_map, 
             s1 = table1[int(states[0])][exp1_bin_map[lookup1]]
             new_state.append(s1)
             s2 = table2[int(states[1])][exp1_bin_map[lookup1]]
-            new_state = s1+","+s2
-            print("new states are = ", new_state)
+            new_state = s1+s2
+            #print("new states are = ", new_state)
             if not(new_state in and_states):
                 and_states.append(new_state)
             new_row.append(new_state)
@@ -365,8 +352,8 @@ def get_list_of_string(list):
     col = ""
     string_list = []
     for item in list:
-        print("item = ", item)
-        col = item[0]+ "," + item[1]
+        #print("item = ", item)
+        col = item[0]+item[1]
         string_list.append(col)
     return string_list
 
@@ -529,15 +516,15 @@ def Q4_solving_function():
 
 def main():
     global exp, n, values, value_map
-    n = 1  # input value of n
+    n = 2  # input value of n
     X = [Int('x%s' % i) for i in range(n + 1)]
-    #exp = And(X[1] + X[2] <= 5, Not(X[1] + X[2] <= 2))  # input expression where write x1 = X[1] , x2 = X[2] , . . . . .
+    exp = And(X[1] + X[2] <= 5, X[1] + X[2] <= 2)  # input expression where write x1 = X[1] , x2 = X[2] , . . . . .
     # exp = Not(X[1] + X[2] <= 2)
-    exp = X[1] <= 2
-    values = [1]  # enter the values of the variables here
+    #exp = X[1] <= 2
+    values = [1, 1]  # enter the values of the variables here
 
     #Q1 solving function
-    Q1_atomic_expression()
+    #Q1_atomic_expression()
 
     #q2 solving function
     # table1, table2, index1, index2 = ([], [], [], [])
@@ -553,7 +540,7 @@ def main():
     # Q4_solving_function()
     #
     # #Q5 solving
-    Q5_solving_function()
+    #Q5_solving_function()
 
 
 
