@@ -17,7 +17,7 @@ coef_variable_map_table = []
 
 
 def get_automata_table(exp, n):
-    global RHS, binary, coefficients
+    global binary, coefficients
     coefficients = []
     left_variables = []
     table = []
@@ -60,7 +60,10 @@ def get_automata_table(exp, n):
     return table
 
 
-def create_table(RHS, table, operator, n):  # function for ==
+def create_table(RHS, table, operator, n):
+    print("in create table ", RHS)
+    global map
+    map = {}
     map[int(str(RHS))] = 1
     map_copy  = {}
     while True:
@@ -69,22 +72,22 @@ def create_table(RHS, table, operator, n):  # function for ==
             if key in map_copy:
                 continue
             else:
-                map_copy[key] = map[key]
+                map_copy[key] = 1
         #print("map_copy = ", map_copy)
         for state in map_copy:
             if map_copy[state] == 1:
                 map_copy[state] = 0
                 if operator == "=":
-                    table = update_table_equals_equals(state, table, n)
+                    table = update_table_equals_equals(state, table, n, RHS)
                 if operator == "<=":
-                    table = update_table_less_than_equals(state, table, n)
+                    table = update_table_less_than_equals(state, table, n, RHS)
                 flag = 1
         if flag == -1:
             break
     return table
 
 
-def update_table_equals_equals(state, table, n):
+def update_table_equals_equals(state, table, n, RHS):
     row = []
     if state == -100:  # for error state
         row.append(str(-100))
@@ -117,8 +120,9 @@ def update_table_equals_equals(state, table, n):
     return table
 
 
-def update_table_less_than_equals(state, table, n):
+def update_table_less_than_equals(state, table, n, RHS):
     row = []
+    global map
     if int(str(RHS)) >= state >= 0:
         if state == RHS:
             row.append(str(state) + "IF")
@@ -135,7 +139,7 @@ def update_table_less_than_equals(state, table, n):
         row.append(str(new_state))
         if not (new_state in map):
             map[new_state] = 1
-    #print("new_map = ", map)
+    print("new_map = ", map)
     table.append(row)
     return table
 
@@ -168,33 +172,51 @@ def parse_and(exp, n):
     print("And")
     exp1 = exp.arg(0)
     exp2 = exp.arg(1)
-    RHS1 = int(str(exp1.arg(1)))
-    RHS2 = int(str(exp2.arg(1)))
-    exp1_variable_index = get_variable_coef_map(exp1)
-    #print("exp1 variables are ", exp1_variable_index)
-    exp2_variable_index = get_variable_coef_map(exp2)
-    #print("exp2 variables are ", exp2_variable_index)
-    n1 = len(coef_variable_map_table[0])
-    n2 = len(coef_variable_map_table[1])
-    table1 = get_automata_table(exp1, n1)
-    print_table(table1)
-    table2 = get_automata_table(exp2, n2)
-    print_table(table2)
-    res_exp1 = get_result(exp1, exp1_variable_index, 0, RHS1)
-    print("result exp1 = ", res_exp1)
-    res_exp2 = get_result(exp2, exp1_variable_index, 1, RHS2)
-    print("result exp2 = ", res_exp2)
-    final_res = res_exp1 and res_exp2
-    print("final result of And = ", final_res)
+    not_index = []
+    if(exp1.decl().name() == "not"):
+        not_index.append(1)
+    if (exp2.decl().name() == "not"):
+        not_index.append(2)
+    if len(not_index) == 0:
 
-    resultant_and_table = combine_and_table(table1, table2)
-    #print_table(resultant_and_table)
+        RHS1 = int(str(exp1.arg(1)))
+        RHS2 = int(str(exp2.arg(1)))
+        exp1_variable_index = get_variable_coef_map(exp1)
+        #print("exp1 variables are ", exp1_variable_index)
+        exp2_variable_index = get_variable_coef_map(exp2)
+        #print("exp2 variables are ", exp2_variable_index)
+        n1 = len(coef_variable_map_table[0])
+        n2 = len(coef_variable_map_table[1])
+        table1 = get_automata_table(exp1, n1)
+        print_table(table1)
+        table2 = get_automata_table(exp2, n2)
+        print(table2)
+        print_table(table2)
+        res_exp1 = get_result(exp1, exp1_variable_index, 0, RHS1)
+        print("result exp1 = ", res_exp1)
+        res_exp2 = get_result(exp2, exp1_variable_index, 1, RHS2)
+        print("result exp2 = ", res_exp2)
+        final_res = res_exp1 and res_exp2
+        print("final result of And = ", final_res)
+        resultant_and_table = combine_and_table(table1, table2)
+        #print_table(resultant_and_table)
 
 
 def combine_and_table(table1, table2):
-    print()
-    #print("table1 = ", table1)
-    # print("table2 = ", table2)
+    print("inside combine and table")
+    final_table = []
+    if len(table1[0]) > len(table2[0]): # heading of table done
+        final_table.append(table1[0])
+    else:
+        final_table.append(table2[0])
+
+    initial_state = []
+    state = table1[1][0]
+    initial_state.append(state[0:state.find("I")])
+    state = table2[1][0]
+    initial_state.append(state[0:state.find("I")])
+    print("Initial state = ", initial_state)
+
 
 # ////////////////////////////////////////////////////////////////////  basic functions starts ///////////////////////////////////////////////////////////////////////////
 
@@ -249,19 +271,18 @@ def get_result(exp, variable_index, coef_num,
     print("value map => ", value_map)
     #print("coef of exp ", coef_num, " = ", coefficient_table[coef_num])
     for i in coef_map:
-        #print("val = ", value_map[i], " , coef = ", coef_map[i])
+        print("val = ", value_map[i], " , coef = ", coef_map[i])
         res = res + coef_map[i] * value_map[i]
         #print("res = ", res)
     if exp.decl().name() == "=":
-        if res == RHS:
+        if res == RHS and exp.decl().name() == "=":
             return True
-        else:
-            return False
     if exp.decl().name() == "<=":
+        print("RHS ---", res)
         if res <= int(str(RHS)):
             return True
-        else:
-            return False
+
+    return False
 
 def padded_bin(i, width):
     s = bin(i)
@@ -281,7 +302,7 @@ def main():
     # ///////////////////////////////  user input starts ////////////////////////////////////////////////////////////
     n = 2  # input value of n
     X = [Int('x%s' % i) for i in range(n + 1)]
-    exp = And(X[1] + X[2] <= 5, X[1] <= 2)  # input expression where write x1 = X[1] , x2 = X[2] , . . . . .
+    exp = And(X[1] + X[2] <= 5, X[2] <= 2)  # input expression where write x1 = X[1] , x2 = X[2] , . . . . .
     #exp = Not(X[1] + X[2] <= 2)
     values = [3, -1]  # enter the values of the variables here
 
